@@ -44,10 +44,19 @@ if uploaded_file:
 if st.button("Generate Shot List 📝", disabled=(not script_text)):
     with st.spinner("Calling LLM to create a shot list..."):
         shot_list_data = generate_scene_breakdown(script_text, openai_key)
-        if shot_list_data and "scenes" in shot_list_data:
-            st.session_state.shot_list_df = pd.DataFrame(shot_list_data["scenes"])
+        
+        scenes_list = []
+        # NEW: Check if the AI returned a dictionary (correct) or just a list (common mistake)
+        if isinstance(shot_list_data, dict) and "scenes" in shot_list_data:
+            scenes_list = shot_list_data["scenes"]
+        elif isinstance(shot_list_data, list):
+            scenes_list = shot_list_data # Use the list directly
+        
+        if scenes_list:
+            st.session_state.shot_list_df = pd.DataFrame(scenes_list)
+            st.success(f"Generated shot list with {len(st.session_state.shot_list_df)} scenes.")
         else:
-            st.error("Failed to generate shot list.")
+            st.error("Failed to generate a valid shot list. The AI response was not in the expected format.")
 
 # Step 2: Shot List Editor
 if not st.session_state.shot_list_df.empty:

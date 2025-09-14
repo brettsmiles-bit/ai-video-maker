@@ -10,33 +10,44 @@ from moviepy.editor import *
 # --- 1. SCRIPT BREAKDOWN ---
 
 def generate_scene_breakdown(script_content, api_key):
-    """Sends the script to an LLM to be broken down into scenes."""
+    """Sends the script to the Google Gemini API to be broken down into scenes."""
+    
+    # Configure the Gemini client
+    genai.configure(api_key=api_key)
+    
+    # This system prompt is slightly modified for Gemini
     system_prompt = """
-    You are an expert video director creating a shot list in JSON format.
-    The entire output must be a single valid JSON object with one key: "scenes".
-    The "scenes" key should contain a list of objects, where each object represents a single scene.
+    You are an expert video director. Your task is to read a video script and break it down into a shot list.
+    The entire output must be a single, valid JSON object with one key: "scenes".
+    The "scenes" key must contain a list of objects.
     Each scene object must contain four keys:
     1. 'scene_number': An integer for the scene order.
-    2. 'narration_text': The exact text to be spoken. Keep it to 1-3 sentences.
+    2. 'narration_text': The exact text to be spoken for the scene (1-3 sentences).
     3. 'visual_prompt': A descriptive prompt for an AI visual generator OR a search query for stock footage.
-    4. 'visual_type': A string that is "video", "image", or "stock_footage". 
-       Choose "stock_footage" for realistic, generic scenes (e.g., "city skyline", "ocean waves").
-       Choose "image" for static concepts or landscapes.
-       Choose "video" for scenes requiring specific, unique actions or character movement.
+    4. 'visual_type': A string that is "video", "image", or "stock_footage". Choose "stock_footage" for realistic, generic scenes, "image" for static concepts, and "video" for specific actions.
     """
-    client = OpenAI(api_key=api_key)
+    
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    model_name = config['SETTINGS']['LLM_MODEL']
+    
+    # Set up the model with JSON output configuration
+    model = genai.GenerativeModel(
+        model_name,
+        generation_config={"response_mime_type": "application/json"}
+    )
+
     try:
-        response = client.chat.completions.create(
-            model=configparser.ConfigParser().read('config.ini')['SETTINGS']['LLM_MODEL'],
-            response_format={"type": "json_object"},
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": script_content}
-            ]
-        )
-        return json.loads(response.choices[0].message.content)
+        # Combine the system prompt and the user's script for the API call
+        full_prompt = f"{system_prompt}\n\nHere is the script:\n\n{script_content}"
+        
+        response = model.generate_content(full_prompt)
+        
+        # The Gemini response object is simpler to parse
+        return json.loads(response.text)
+        
     except Exception as e:
-        print(f"Error breaking down script: {e}")
+        print(f"Error breaking down script with Gemini: {e}")
         return None
 
 # --- 2. ASSET GENERATION ---
