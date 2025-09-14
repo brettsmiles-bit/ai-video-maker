@@ -23,7 +23,7 @@ with st.sidebar:
     config = configparser.ConfigParser()
     config.read('config.ini')
     
-    openai_key = st.text_input("OpenAI API Key", value=config['API_KEYS']['OPENAI_API_KEY'], type="password")
+     google_key = st.text_input("Google AI API Key", value=config['API_KEYS']['GOOGLE_API_KEY'], type="password")
     stability_key = st.text_input("Stability AI API Key", value=config['API_KEYS']['STABILITY_API_KEY'], type="password")
     elevenlabs_key = st.text_input("ElevenLabs API Key", value=config['API_KEYS']['ELEVENLABS_API_KEY'], type="password")
     pexels_key = st.text_input("Pexels API Key", value=config['API_KEYS']['PEXELS_API_KEY'], type="password")
@@ -43,7 +43,7 @@ if uploaded_file:
 
 if st.button("Generate Shot List 📝", disabled=(not script_text)):
     with st.spinner("Calling LLM to create a shot list..."):
-        shot_list_data = generate_scene_breakdown(script_text, openai_key)
+        shot_list_data = generate_scene_breakdown(script_text, google_key)
         
         scenes_list = []
         # NEW: Check if the AI returned a dictionary (correct) or just a list (common mistake)
