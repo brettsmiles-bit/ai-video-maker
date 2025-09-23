@@ -3,7 +3,7 @@ import json
 import time
 import requests
 import configparser
-from openai import OpenAI
+import google.generativeai as genai
 from elevenlabs.client import ElevenLabs
 from moviepy.editor import *
 
